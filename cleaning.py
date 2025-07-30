@@ -40,7 +40,7 @@ def drop_useless_columns(raw_shark_attack_df):
                                                     , 'href formula'
                                                     , 'href', 'Case Number.1'
                                                     , 'original order'
-                                                    ,'Unnamed: 21','Unnamed: 22', 'Location'
+                                                    ,'Unnamed: 21','Unnamed: 22', 'Location', 'Time'
                                                     ], errors='ignore')
 
 def clean_date(raw_shark_attack_df):
@@ -200,7 +200,7 @@ def clean_species(raw_shark_attack_df, score_cutoff=70):
         # Handle invalid/unconfirmed cases
         invalid_terms = ['invalid', 'questionable', 'not confirmed', 'unconfirmed', 'not stated']
         if any(term in species.lower() for term in invalid_terms):
-            return 'Unconfirmed'
+            return 'Unknown'
         
         # Handle size descriptions without species
         if "'" in species or 'm' in species.lower() or 'shark' not in species.lower():
@@ -220,7 +220,36 @@ def clean_species(raw_shark_attack_df, score_cutoff=70):
             'mako': 'Mako Shark',
             'blue shark': 'Blue Shark',
             'nurse shark': 'Nurse Shark',
-            'lemon shark': 'Lemon Shark'
+            'lemon shark': 'Lemon Shark',
+            'spinner shark': 'Spinner Shark',
+            'dusky shark': 'Dusky Shark',
+            'silky shark': 'Silky Shark',
+            'bronze whaler': 'Bronze Whaler Shark',
+            'galapagos shark': 'Galapagos Shark',
+            'grey reef shark': 'Grey Reef Shark',
+            'blacktip reef shark': 'Blacktip Reef Shark',
+            'whitetip reef shark': 'Whitetip Reef Shark',
+            'caribbean reef shark': 'Caribbean Reef Shark',
+            'silvertip shark': 'Silvertip Shark',
+            'oceanic whitetip shark': 'Oceanic Whitetip Shark',
+            'porbeagle shark': 'Porbeagle Shark',
+            'basking shark': 'Basking Shark',
+            'whale shark': 'Whale Shark',
+            'goblin shark': 'Goblin Shark',
+            'angel shark': 'Angel Shark',
+            'leopard shark': 'Leopard Shark',
+            'dogfish shark': 'Dogfish Shark',
+            'sevengill shark': 'Sevengill Shark',
+            'sixgill shark': 'Sixgill Shark',
+            'reef shark': 'Reef Shark',
+            'sandbar shark': 'Sandbar Shark',
+            'thresher shark': 'Thresher Shark',
+            'reef': 'Reef Shark',
+            'sand tiger shark': 'Sand Tiger Shark',
+            'sand tiger': 'Sand Tiger Shark',
+            'unconfirmed': 'Unknown',
+            'Unconfirmed': 'Unknown',
+            'unknown': 'Unknown'
         }
         
         species_lower = species.lower()
@@ -242,49 +271,43 @@ def clean_species(raw_shark_attack_df, score_cutoff=70):
     
     return shark_attack_df
 
-def clean_time(raw_shark_attack_df):
+def clean_injury(raw_shark_attack_df):
     shark_attack_df = raw_shark_attack_df.copy()
+
+    def categorize_body_part(injury):
+        injury = str(injury).lower()
+
+        if "leg" in injury or "thigh" in injury or "calf" in injury or "foot" in injury:
+            return "Leg / Foot"
+        elif "arm" in injury or "bicep" in injury or "wrist" in injury:
+            return "Arm"
+        elif "hand" in injury or "finger" in injury:
+            return "Hand / Fingers"
+        elif "shoulder" in injury:
+            return "Shoulder"
+        elif "abdomen" in injury or "stomach" in injury or "torso" in injury or "body" in injury:
+            return "Body / Abdomen"
+        elif "head" in injury or "face" in injury or "neck" in injury:
+            return "Head / Neck"
+        else:
+            return "Unspecified / Multiple"
     
-    def normalize_time(time_str):
-        if pd.isna(time_str):
-            return 'Unknown'
-        
-        time_str = str(time_str).strip().upper()
-        
-        # Direct AM/PM cases
-        if 'AM' in time_str:
-            return 'AM'
-        if 'PM' in time_str:
-            return 'PM'
-        
-        # Morning/Afternoon mapping
-        if any(sub in time_str for sub in ['MORNING', 'A.M.']):
-            return 'AM'
-        if any(sub in time_str for sub in ['AFTERNOON', 'NIGHT', 'EVENING', 'P.M.', 'DUSK', 'MIDDAY', 'SUNSET']):
-            return 'PM'
-        
-        import re
-        # HHhMM format (e.g., 14h30)
-        hhmm_match = re.search(r'(\d{1,2})H(\d{2})', time_str)
-        if hhmm_match:
-            hour = int(hhmm_match.group(1))
-            return 'AM' if hour < 12 else 'PM'
-        
-        # Extract hour from various formats (1500hrs, 1615 hrs, etc.)
-        hour_match = re.search(r'(\d{1,2})(\d{2})', time_str.replace('HRS', '').replace(':', ''))
-        if hour_match:
-            hour = int(hour_match.group(1))
-            return 'AM' if hour < 12 else 'PM'
-        
-        # Single or double digit hours
-        hour_match = re.search(r'^(\d{1,2})$', time_str)
-        if hour_match:
-            hour = int(hour_match.group(1))
-            return 'AM' if hour < 12 else 'PM'
-        
-        return 'Unknown'
-    
-    shark_attack_df['Cat Time'] = shark_attack_df['Time'].apply(normalize_time)
+    shark_attack_df['Body Part'] = shark_attack_df['Injury'].apply(categorize_body_part)
+    shark_attack_df = shark_attack_df.drop(columns=['Injury'], errors='ignore')
+    return shark_attack_df
+
+def clean_fatal(raw_shark_attack_df):
+    shark_attack_df = raw_shark_attack_df.copy()
+    shark_attack_df['Fatal Y/N'] = shark_attack_df['Fatal Y/N'].fillna('')
+    shark_attack_df['Fatal Y/N'] = shark_attack_df['Fatal Y/N'].str.strip().str.upper()
+    shark_attack_df['Fatal Y/N'] = shark_attack_df['Fatal Y/N'].replace({
+        'Y': 'Yes',
+        'Y X 2': 'Yes',
+        'F': 'Yes',
+        'N': 'No',
+        'NQ': 'No'
+    })
+    shark_attack_df['Fatal Y/N'] = shark_attack_df['Fatal Y/N'].apply(lambda x: x if x in ['Yes', 'No'] else 'Unknown')
     return shark_attack_df
 
 def clean_data(raw_shark_attack_df):
@@ -297,5 +320,6 @@ def clean_data(raw_shark_attack_df):
     shark_attack_df = clean_state(shark_attack_df, 60)
     shark_attack_df = clean_activity(shark_attack_df)
     shark_attack_df = clean_species(shark_attack_df)
-    shark_attack_df = clean_time(shark_attack_df)
+    shark_attack_df = clean_injury(shark_attack_df)
+    shark_attack_df = clean_fatal(shark_attack_df)
     return shark_attack_df
