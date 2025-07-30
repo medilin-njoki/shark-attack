@@ -242,6 +242,51 @@ def clean_species(raw_shark_attack_df, score_cutoff=70):
     
     return shark_attack_df
 
+def clean_time(raw_shark_attack_df):
+    shark_attack_df = raw_shark_attack_df.copy()
+    
+    def normalize_time(time_str):
+        if pd.isna(time_str):
+            return 'Unknown'
+        
+        time_str = str(time_str).strip().upper()
+        
+        # Direct AM/PM cases
+        if 'AM' in time_str:
+            return 'AM'
+        if 'PM' in time_str:
+            return 'PM'
+        
+        # Morning/Afternoon mapping
+        if any(sub in time_str for sub in ['MORNING', 'A.M.']):
+            return 'AM'
+        if any(sub in time_str for sub in ['AFTERNOON', 'NIGHT', 'EVENING', 'P.M.', 'DUSK', 'MIDDAY', 'SUNSET']):
+            return 'PM'
+        
+        import re
+        # HHhMM format (e.g., 14h30)
+        hhmm_match = re.search(r'(\d{1,2})H(\d{2})', time_str)
+        if hhmm_match:
+            hour = int(hhmm_match.group(1))
+            return 'AM' if hour < 12 else 'PM'
+        
+        # Extract hour from various formats (1500hrs, 1615 hrs, etc.)
+        hour_match = re.search(r'(\d{1,2})(\d{2})', time_str.replace('HRS', '').replace(':', ''))
+        if hour_match:
+            hour = int(hour_match.group(1))
+            return 'AM' if hour < 12 else 'PM'
+        
+        # Single or double digit hours
+        hour_match = re.search(r'^(\d{1,2})$', time_str)
+        if hour_match:
+            hour = int(hour_match.group(1))
+            return 'AM' if hour < 12 else 'PM'
+        
+        return 'Unknown'
+    
+    shark_attack_df['Cat Time'] = shark_attack_df['Time'].apply(normalize_time)
+    return shark_attack_df
+
 def clean_data(raw_shark_attack_df):
     shark_attack_df = drop_useless_columns(raw_shark_attack_df)
     shark_attack_df = clean_date(shark_attack_df)
@@ -252,4 +297,5 @@ def clean_data(raw_shark_attack_df):
     shark_attack_df = clean_state(shark_attack_df, 60)
     shark_attack_df = clean_activity(shark_attack_df)
     shark_attack_df = clean_species(shark_attack_df)
+    shark_attack_df = clean_time(shark_attack_df)
     return shark_attack_df
