@@ -3,8 +3,21 @@ import pandas as pd
 from pycountry import countries
 from fuzzywuzzy import process
 
-# clean the colunm 'Type' in df
 def clean_type(raw_shark_attack_df):
+    """
+    Cleans the 'Type' column of the shark attack DataFrame.
+
+    This function standardizes the values in the 'Type' column by mapping various
+    unconfirmed or questionable entries to 'Unconfirmed', standardizing capitalization,
+    and ensuring consistent terminology for attack types like 'Unprovoked', 'Provoked',
+    and 'Watercraft'.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Type' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     shark_attack_df['Type'] = shark_attack_df['Type'].replace({'?': 'Unconfirmed', 
                                                           'Unverified': 'Unconfirmed', 
@@ -17,6 +30,19 @@ def clean_type(raw_shark_attack_df):
     return shark_attack_df
 
 def clean_sex(raw_shark_attack_df):
+    """
+    Cleans the 'Sex' column of the shark attack DataFrame.
+
+    This function standardizes the 'Sex' column by stripping whitespace, converting
+    to uppercase, and mapping various non-standard entries to 'M' (Male) or NaN
+    for unknown values.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Sex' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     shark_attack_df['Sex'] = shark_attack_df['Sex'].str.strip()
     shark_attack_df['Sex'] = shark_attack_df['Sex'].str.upper()
@@ -28,11 +54,36 @@ def clean_sex(raw_shark_attack_df):
     return shark_attack_df
 
 def clean_age(raw_shark_attack_df):
+    """
+    Cleans the 'Age' column of the shark attack DataFrame.
+
+    This function converts the 'Age' column to a numeric type, coercing any
+    non-numeric values to NaN. It then casts the column to an integer type
+    that supports missing values.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Age' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     shark_attack_df['Age'] = pd.to_numeric(shark_attack_df['Age'], errors='coerce').astype('Int64')
     return shark_attack_df
 
 def drop_useless_columns(raw_shark_attack_df):
+    """
+    Drops useless columns from the shark attack DataFrame.
+
+    This function removes columns that are not needed for analysis, such as
+    'Case Number', 'Name', 'Source', etc.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the useless columns removed.
+    """
     return raw_shark_attack_df.drop(columns=['Case Number'
                                                     , 'Name'
                                                     , 'Source'
@@ -44,6 +95,18 @@ def drop_useless_columns(raw_shark_attack_df):
                                                     ], errors='ignore')
 
 def clean_date(raw_shark_attack_df):
+    """
+    Cleans the date-related columns of the shark attack DataFrame.
+
+    This function extracts the month and year from the 'Date' and 'Year' columns,
+    creates new 'Month' and 'Year' columns, and drops the original 'Date' and 'Year' columns.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with cleaned date columns.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     
     # Extract month from Date column
@@ -72,6 +135,20 @@ def clean_date(raw_shark_attack_df):
     return shark_attack_df
 
 def clean_state(raw_shark_attack_df, score_cutoff):
+    """
+    Cleans the 'State' column of the shark attack DataFrame.
+
+    This function standardizes the 'State' column by using fuzzy matching to correct
+    misspellings and variations. It uses a predefined list of states for major
+    countries to ensure consistency.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+        score_cutoff (int): The minimum score for a fuzzy match to be considered valid.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'State' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     
     # State mappings for major countries
@@ -106,6 +183,20 @@ def clean_state(raw_shark_attack_df, score_cutoff):
     return shark_attack_df
 
 def clean_country(raw_shark_attack_df, score_cutoff=80):
+    """
+    Cleans the 'Country' column of the shark attack DataFrame.
+
+    This function standardizes the 'Country' column by using fuzzy matching to correct
+    misspellings and variations. It uses a list of all country names from the
+    pycountry library to ensure consistency.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+        score_cutoff (int): The minimum score for a fuzzy match to be considered valid.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Country' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     
     # Get list of all country names
@@ -137,6 +228,19 @@ def clean_country(raw_shark_attack_df, score_cutoff=80):
     return shark_attack_df
 
 def clean_activity(raw_shark_attack_df):
+    """
+    Cleans the 'Activity' column of the shark attack DataFrame.
+
+    This function categorizes the activities into a predefined set of categories
+    such as 'Swimming', 'Surfing', 'Diving', etc. It uses keyword matching and
+    fuzzy matching to normalize the activity descriptions.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Activity' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     
     # Activity categories and keywords
@@ -176,6 +280,20 @@ def clean_activity(raw_shark_attack_df):
     return shark_attack_df
 
 def clean_species(raw_shark_attack_df, score_cutoff=70):
+    """
+    Cleans the 'Species' column of the shark attack DataFrame.
+
+    This function standardizes the shark species names using a predefined list of
+    common species. It uses a combination of direct name mapping and fuzzy matching
+    to normalize the data.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+        score_cutoff (int): The minimum score for a fuzzy match to be considered valid.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Species' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     
     # Real shark species list
@@ -272,6 +390,19 @@ def clean_species(raw_shark_attack_df, score_cutoff=70):
     return shark_attack_df
 
 def clean_injury(raw_shark_attack_df):
+    """
+    Cleans the 'Injury' column of the shark attack DataFrame.
+
+    This function categorizes the injuries into a predefined set of body parts
+    such as 'Leg / Foot', 'Arm', 'Hand / Fingers', etc. It uses keyword matching
+    to normalize the injury descriptions.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with a 'Body Part' column and the 'Injury' column removed.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
 
     def categorize_body_part(injury):
@@ -297,6 +428,18 @@ def clean_injury(raw_shark_attack_df):
     return shark_attack_df
 
 def clean_fatal(raw_shark_attack_df):
+    """
+    Cleans the 'Fatal Y/N' column of the shark attack DataFrame.
+
+    This function standardizes the 'Fatal Y/N' column by mapping various
+    yes/no representations to 'Yes' and 'No', and handling unknown values.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new DataFrame with the 'Fatal Y/N' column cleaned.
+    """
     shark_attack_df = raw_shark_attack_df.copy()
     shark_attack_df['Fatal Y/N'] = shark_attack_df['Fatal Y/N'].fillna('')
     shark_attack_df['Fatal Y/N'] = shark_attack_df['Fatal Y/N'].str.strip().str.upper()
@@ -311,6 +454,18 @@ def clean_fatal(raw_shark_attack_df):
     return shark_attack_df
 
 def clean_data(raw_shark_attack_df):
+    """
+    Performs a full cleaning of the shark attack DataFrame.
+
+    This function applies all the individual cleaning functions to the DataFrame
+    in the correct order.
+
+    Args:
+        raw_shark_attack_df (pd.DataFrame): The raw DataFrame containing shark attack data.
+
+    Returns:
+        pd.DataFrame: A new, fully cleaned DataFrame.
+    """
     shark_attack_df = drop_useless_columns(raw_shark_attack_df)
     shark_attack_df = clean_date(shark_attack_df)
     shark_attack_df = clean_sex(shark_attack_df)
